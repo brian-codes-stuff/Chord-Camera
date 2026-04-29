@@ -1,0 +1,360 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+
+import { colors, spacing, radius, typography } from '../theme';
+import { parseChart, transposeChart, extractChords } from '../services/chordParser';
+import { detectKey, keyDistance, ALL_KEYS } from '../services/transposer';
+import { saveChart, getChart } from '../services/storage';
+
+const MONO_FONT = Platform.select({
+  ios: 'Menlo',
+  android: 'monospace',
+  default: 'monospace',
+});
+
+function ChordLine({ line }) {
+  if (line.type === 'section') {
+    return (
+      <Text style={styles.sectionLine}>[{line.text}]</Text>
+    );
+  }
+  if (line.type === 'blank') {
+    return <Text style={styles.blankLine}> </Text>;
+  }
+  if (line.type === 'chord') {
+    return <Text style={[styles.line, styles.chordLine]}>{line.text}</Text>;
+  }
+  return <Text style={[styles.line, styles.lyricLine]}>{line.text}</Text>;
+}
+
+export default function EditorScreen({ route, navigation }) {
+  const { rawText: initialText, chartId, sourceUri } = route.params || {};
+
+  const [title, setTitle] = useState('Untitled');
+  const [originalText, setOriginalText] = useState(initialText || '');
+  const [originalKey, setOriginalKey] = useState('C');
+  const [targetKey, setTargetKey] = useState('C');
+  const [savedId, setSavedId] = useState(chartId || null);
+
+  // Hydrate from saved chart if opening from history
+  useEffect(() => {
+    if (!chartId) return;
+    (async () => {
+      const chart = await getChart(chartId);
+      if (chart) {
+        setTitle(chart.title);
+        setOriginalText(chart.text);
+        setOriginalKey(chart.originalKey);
+        setTargetKey(chart.originalKey);
+      }
+    })();
+  }, [chartId]);
+
+  // Detect original key on first load
+  useEffect(() => {
+    if (chartId) return; // already-saved charts have their key
+    if (!originalText) return;
+    const parsed = parseChart(originalText);
+    const chords = extractChords(parsed);
+    const detected = detectKey(chords);
+    setOriginalKey(detected);
+    setTargetKey(detected);
+  }, [originalText, chartId]);
+
+  const parsed = useMemo(() => parseChart(originalText), [originalText]);
+
+  const transposed = useMemo(() => {
+    const semitones = keyDistance(originalKey, targetKey);
+    return transposeChart(parsed, semitones, targetKey);
+  }, [parsed, originalKey, targetKey]);
+
+  const handleKeyChange = (key) => {
+    Haptics.selectionAsync();
+    setTargetKey(key);
+  };
+
+  const handleSave = async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const entry = await saveChart({
+      id: savedId,
+      title: title.trim() || 'Untitled',
+      originalKey,
+      text: originalText,
+    });
+    setSavedId(entry.id);
+    Alert.alert('Saved', `"${entry.title}" saved to your library.`);
+  };
+
+  const handleClose = () => {
+    if (!savedId && originalText) {
+      Alert.alert(
+        'Discard chart?',
+        'You haven\'t saved this chart yet.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Discard', style: 'destructive', onPress: () => navigation.popToTop() },
+          { text: 'Save', onPress: async () => { await handleSave(); navigation.popToTop(); } },
+        ],
+      );
+    } else {
+      navigation.popToTop();
+    }
+  };
+
+  const semitones = keyDistance(originalKey, targetKey);
+  const isTransposed = semitones !== 0;
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleClose} hitSlop={12}>
+          <Text style={styles.headerAction}>Done</Text>
+        </TouchableOpacity>
+        <TextInput
+          value={title}
+          onChangeText={setTitle}
+          style={styles.titleInput}
+          placeholder="Chart title"
+          placeholderTextColor={colors.textMuted}
+          textAlign="center"
+          returnKeyType="done"
+        />
+        <TouchableOpacity onPress={handleSave} hitSlop={12}>
+          <Text style={[styles.headerAction, { color: colors.accent }]}>Save</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Key info bar */}
+      <View style={styles.keyBar}>
+        <View style={styles.keyBlock}>
+          <Text style={styles.keyLabel}>Original</Text>
+          <TouchableOpacity
+            style={styles.keyValue}
+            onPress={() => {
+              const idx = ALL_KEYS.indexOf(originalKey);
+              const next = ALL_KEYS[(idx + 1) % ALL_KEYS.length];
+              Haptics.selectionAsync();
+              setOriginalKey(next);
+            }}
+          >
+            <Text style={styles.keyValueText}>{originalKey}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.transposeIndicator}>
+          <Text style={styles.transposeArrow}>→</Text>
+          {isTransposed && (
+            <Text style={styles.transposeAmount}>
+              {semitones > 6 ? semitones - 12 : semitones} st
+            </Text>
+          )}
+        </View>
+
+        <View style={styles.keyBlock}>
+          <Text style={styles.keyLabel}>Playing in</Text>
+          <View style={[styles.keyValue, styles.keyValueActive]}>
+            <Text style={[styles.keyValueText, styles.keyValueTextActive]}>
+              {targetKey}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Key picker pills */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.keyPicker}
+      >
+        {ALL_KEYS.map(key => {
+          const active = key === targetKey;
+          return (
+            <TouchableOpacity
+              key={key}
+              style={[styles.keyPill, active && styles.keyPillActive]}
+              onPress={() => handleKeyChange(key)}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.keyPillText,
+                  active && styles.keyPillTextActive,
+                ]}
+              >
+                {key}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* Chart display */}
+      <ScrollView
+        style={styles.chartScroll}
+        contentContainerStyle={styles.chartContent}
+        horizontal={false}
+      >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.chartInner}>
+            {transposed.length === 0 ? (
+              <Text style={styles.placeholder}>
+                No chart text yet. Capture a chord chart to begin.
+              </Text>
+            ) : (
+              transposed.map((line, i) => (
+                <ChordLine key={i} line={line} />
+              ))
+            )}
+          </View>
+        </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomColor: colors.bgCardBorder,
+    borderBottomWidth: 1,
+  },
+  headerAction: {
+    ...typography.body,
+    color: colors.textSecondary,
+    minWidth: 50,
+  },
+  titleInput: {
+    flex: 1,
+    ...typography.heading,
+    color: colors.textPrimary,
+    paddingHorizontal: spacing.md,
+  },
+  keyBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.bgCard,
+  },
+  keyBlock: { alignItems: 'center', flex: 1 },
+  keyLabel: {
+    ...typography.micro,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    marginBottom: spacing.xs,
+  },
+  keyValue: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    backgroundColor: colors.bgCardElevated,
+    minWidth: 64,
+    alignItems: 'center',
+  },
+  keyValueActive: {
+    backgroundColor: colors.accent,
+  },
+  keyValueText: {
+    ...typography.title,
+    color: colors.textPrimary,
+  },
+  keyValueTextActive: {
+    color: '#0A0E1A',
+  },
+  transposeIndicator: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  transposeArrow: {
+    fontSize: 24,
+    color: colors.textMuted,
+  },
+  transposeAmount: {
+    ...typography.micro,
+    color: colors.accent,
+    marginTop: 2,
+  },
+  keyPicker: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  keyPill: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: colors.bgCard,
+    borderColor: colors.bgCardBorder,
+    borderWidth: 1,
+    marginRight: spacing.sm,
+    minWidth: 48,
+    alignItems: 'center',
+  },
+  keyPillActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  keyPillText: {
+    ...typography.heading,
+    color: colors.textPrimary,
+  },
+  keyPillTextActive: {
+    color: '#0A0E1A',
+  },
+  chartScroll: { flex: 1 },
+  chartContent: { flexGrow: 1 },
+  chartInner: {
+    padding: spacing.lg,
+    minHeight: '100%',
+  },
+  line: {
+    fontFamily: MONO_FONT,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  chordLine: {
+    color: colors.chord,
+    fontWeight: '700',
+  },
+  lyricLine: {
+    color: colors.lyric,
+  },
+  sectionLine: {
+    fontFamily: MONO_FONT,
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.accentLight,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  blankLine: {
+    fontFamily: MONO_FONT,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  placeholder: {
+    ...typography.body,
+    color: colors.textMuted,
+    textAlign: 'center',
+    paddingTop: spacing.xxl,
+  },
+});

@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Chord Camera",
+    "slug": "chord-camera",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0E1A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.brianalonzo.chordcamera",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Chord Camera uses the camera to capture chord charts so you can transpose them.",
+        "NSPhotoLibraryUsageDescription": "Chord Camera reads chord charts from your photo library so you can transpose them."
+      }
+    },
+    "android": {
+      "package": "com.brianalonzo.chordcamera",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A0E1A"
+      },
+      "permissions": ["android.permission.CAMERA", "android.permission.READ_MEDIA_IMAGES"]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Chord Camera reads chord charts from your photo library.",
+          "cameraPermission": "Chord Camera uses the camera to capture chord charts."
+        }
+      ]
+    ]
+  }
+}
