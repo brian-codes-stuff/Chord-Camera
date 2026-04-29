@@ -4,29 +4,25 @@
     "slug": "chord-camera",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0A0E1A"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.brianalonzo.chordcamera",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Chord Camera uses the camera to capture chord charts so you can transpose them.",
         "NSPhotoLibraryUsageDescription": "Chord Camera reads chord charts from your photo library so you can transpose them."
       }
     },
     "android": {
       "package": "com.brianalonzo.chordcamera",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0A0E1A"
-      },
-      "permissions": ["android.permission.CAMERA", "android.permission.READ_MEDIA_IMAGES"]
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "com.google.android.gms.permission.AD_ID"
+      ]
     },
     "plugins": [
       [
@@ -34,6 +30,19 @@
         {
           "photosPermission": "Chord Camera reads chord charts from your photo library.",
           "cameraPermission": "Chord Camera uses the camera to capture chord charts."
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "This identifier is used to deliver more relevant ads, which keeps Chord Camera free."
         }
       ]
     ]

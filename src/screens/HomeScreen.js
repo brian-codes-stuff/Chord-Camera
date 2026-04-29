@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 
 import { colors, spacing, radius, typography } from '../theme';
 import { loadHistory, deleteChart } from '../services/storage';
+import Banner from '../components/Banner';
 
 function formatRelative(ts) {
   const diff = Date.now() - ts;
@@ -64,7 +65,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         refreshControl={
@@ -139,6 +140,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.hint}>Long-press a chart to delete</Text>
         )}
       </ScrollView>
+      <Banner />
     </SafeAreaView>
   );
 }

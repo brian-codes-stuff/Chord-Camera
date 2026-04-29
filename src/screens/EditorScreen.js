@@ -16,6 +16,7 @@ import { colors, spacing, radius, typography } from '../theme';
 import { parseChart, transposeChart, extractChords } from '../services/chordParser';
 import { detectKey, keyDistance, ALL_KEYS } from '../services/transposer';
 import { saveChart, getChart } from '../services/storage';
+import Banner from '../components/Banner';
 
 const MONO_FONT = Platform.select({
   ios: 'Menlo',
@@ -116,7 +117,7 @@ export default function EditorScreen({ route, navigation }) {
   const isTransposed = semitones !== 0;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleClose} hitSlop={12}>
@@ -220,6 +221,7 @@ export default function EditorScreen({ route, navigation }) {
           </View>
         </ScrollView>
       </ScrollView>
+      <Banner />
     </SafeAreaView>
   );
 }
