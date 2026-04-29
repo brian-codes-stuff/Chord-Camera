@@ -46,15 +46,15 @@ const TEST_IDS = {
   }),
 };
 
-// Replace these with real IDs from the AdMob console before releasing for revenue
+// Real Chord Camera ad units (publisher ID 6177580188526680)
 const PROD_AD_UNITS = {
   banner: Platform.select({
-    ios:     'ca-app-pub-3940256099942544/2934735716',
-    android: 'ca-app-pub-3940256099942544/6300978111',
+    ios:     'ca-app-pub-6177580188526680/6273019056',
+    android: 'ca-app-pub-6177580188526680/5585474568',
   }),
   interstitial: Platform.select({
-    ios:     'ca-app-pub-3940256099942544/4411468910',
-    android: 'ca-app-pub-3940256099942544/1033173712',
+    ios:     'ca-app-pub-6177580188526680/5039828430',
+    android: 'ca-app-pub-6177580188526680/4715246024',
   }),
 };
 
@@ -67,4 +67,72 @@ export async function initAds() {
   } catch (e) {
     console.warn('[ads] init failed:', e);
   }
+}
+
+// ── Interstitial helper ──────────────────────────────────────────────────
+//
+// Pre-loads an interstitial in the background so it's ready when we want
+// to show it (Google's load → show pattern; showing without a loaded ad
+// is a no-op). After every show, we eagerly load the next one.
+
+let _interstitial = null;
+let _loaded = false;
+
+function ensureLoaded() {
+  if (!ADS_AVAILABLE || !AD_UNITS.interstitial) return;
+  if (_interstitial && _loaded) return;
+
+  _interstitial = InterstitialAd.createForAdRequest(AD_UNITS.interstitial, {
+    requestNonPersonalizedAdsOnly: false,
+  });
+
+  const onLoaded = _interstitial.addAdEventListener(AdEventType.LOADED, () => {
+    _loaded = true;
+  });
+  const onClosed = _interstitial.addAdEventListener(AdEventType.CLOSED, () => {
+    _loaded = false;
+    _interstitial = null;
+    onLoaded();
+    onClosed();
+    onError();
+    // Pre-load the next one
+    setTimeout(ensureLoaded, 250);
+  });
+  const onError = _interstitial.addAdEventListener(AdEventType.ERROR, (e) => {
+    console.warn('[ads] interstitial error:', e?.message || e);
+    _loaded = false;
+    _interstitial = null;
+  });
+
+  try {
+    _interstitial.load();
+  } catch (e) {
+    console.warn('[ads] interstitial load threw:', e);
+  }
+}
+
+/**
+ * Show an interstitial if one is ready. Safe to call any time — returns false
+ * if not loaded yet (e.g., first call right after app launch).
+ */
+export function showInterstitial() {
+  if (!ADS_AVAILABLE) return false;
+  ensureLoaded();
+  if (_interstitial && _loaded) {
+    try {
+      _interstitial.show();
+      return true;
+    } catch (e) {
+      console.warn('[ads] interstitial show failed:', e);
+    }
+  }
+  return false;
+}
+
+/**
+ * Pre-warm the cache so the first show() lands an ad. Call once after init.
+ */
+export function preloadInterstitial() {
+  if (!ADS_AVAILABLE) return;
+  ensureLoaded();
 }

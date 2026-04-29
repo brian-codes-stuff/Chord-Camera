@@ -1,7 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HISTORY_KEY = '@chord_camera/history';
+const SAVE_COUNT_KEY = '@chord_camera/save_count';
 const MAX_HISTORY = 50;
+
+export async function incrementSaveCount() {
+  const raw = await AsyncStorage.getItem(SAVE_COUNT_KEY);
+  const n = (parseInt(raw, 10) || 0) + 1;
+  await AsyncStorage.setItem(SAVE_COUNT_KEY, String(n));
+  return n;
+}
 
 export async function loadHistory() {
   try {

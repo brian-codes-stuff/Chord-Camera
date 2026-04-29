@@ -8,7 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import HomeScreen from './src/screens/HomeScreen';
 import CaptureScreen from './src/screens/CaptureScreen';
 import EditorScreen from './src/screens/EditorScreen';
-import { initAds } from './src/services/ads.native';
+import { initAds, preloadInterstitial } from './src/services/ads.native';
 import { requestTrackingPermission } from './src/services/tracking';
 import { colors } from './src/theme';
 
@@ -33,6 +33,7 @@ export default function App() {
       // Ask for tracking first; SDK behaves better if it knows the consent state
       await requestTrackingPermission();
       await initAds();
+      preloadInterstitial();
     })();
   }, []);
 

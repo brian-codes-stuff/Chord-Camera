@@ -15,8 +15,11 @@ import * as Haptics from 'expo-haptics';
 import { colors, spacing, radius, typography } from '../theme';
 import { parseChart, transposeChart, extractChords } from '../services/chordParser';
 import { detectKey, keyDistance, ALL_KEYS } from '../services/transposer';
-import { saveChart, getChart } from '../services/storage';
+import { saveChart, getChart, incrementSaveCount } from '../services/storage';
+import { showInterstitial } from '../services/ads.native';
 import Banner from '../components/Banner';
+
+const INTERSTITIAL_EVERY_N_SAVES = 4;
 
 const MONO_FONT = Platform.select({
   ios: 'Menlo',
@@ -94,6 +97,17 @@ export default function EditorScreen({ route, navigation }) {
       text: originalText,
     });
     setSavedId(entry.id);
+
+    // Fire an interstitial every Nth save (skip the first, only show on subsequent
+    // saves so we never block the very first delight moment)
+    const newSaveOnly = !savedId;
+    if (newSaveOnly) {
+      const count = await incrementSaveCount();
+      if (count > 1 && count % INTERSTITIAL_EVERY_N_SAVES === 0) {
+        setTimeout(() => showInterstitial(), 400);
+      }
+    }
+
     Alert.alert('Saved', `"${entry.title}" saved to your library.`);
   };
 
