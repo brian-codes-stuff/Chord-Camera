@@ -14,6 +14,20 @@ const SECTION_REGEX = /^\s*\[([^\]]+)\]\s*$/;
 const SECTION_KEYWORD_REGEX =
   /^\s*((?:pre[-\s]?)?(?:verse|chorus|bridge|intro|outro|interlude|tag|coda|refrain|ending|hook|solo|instrumental|breakdown|vamp|turnaround|prechorus)(?:\s*\d+)?)\s*:?\s*$/i;
 
+// Metadata header lines (chart info, not chords) — leave as plain lyric so the
+// chord roots in them ("G" in "Key - G") don't get transposed.
+const METADATA_REGEX =
+  /\b(key|tempo|bpm|time|time\s*signature|capo|ccli|songselect|copyright|©|\(c\)|words?\s*(?:&|and)\s*music|arr\.?|arrangement|recorded\s+by|based\s+on)\b/i;
+
+// Logo / brand strings worth skipping outright (often OCR'd from the chart header)
+const BRAND_REGEX = /\b(songselect|ccli|onsong|chordpro|planning\s*center|propresenter)\b/i;
+
+// Minimum number of chord-shaped tokens required for a line to be classified
+// as a chord line. Catches cases where OCR isolates a single letter (e.g. the
+// "G" in "Key - G", or a logo letter on its own line) that happens to match
+// a chord regex.
+const MIN_CHORDS_PER_LINE = 2;
+
 /**
  * Classify and parse a single line.
  */
@@ -26,6 +40,11 @@ function classifyLine(line) {
   const keywordMatch = line.match(SECTION_KEYWORD_REGEX);
   if (keywordMatch) return { type: 'section', text: keywordMatch[1].trim() };
 
+  // Metadata / brand / copyright headers — never transpose
+  if (METADATA_REGEX.test(line) || BRAND_REGEX.test(line)) {
+    return { type: 'lyric', text: line };
+  }
+
   // Find all whitespace-separated tokens with their column positions
   const tokens = [];
   const tokenRegex = /\S+/g;
@@ -36,11 +55,15 @@ function classifyLine(line) {
 
   if (!tokens.length) return { type: 'blank', text: '' };
 
-  // Classify as chord line if >=60% of tokens parse as chords
+  // Classify as chord line only if:
+  //   1. >=60% of tokens parse as chords AND
+  //   2. there are at least MIN_CHORDS_PER_LINE chord tokens
+  // Rule #2 stops single stray letters (logo fragments, "Key - G", etc.)
+  // from getting transposed.
   const chordTokens = tokens.filter(t => isChord(t.text));
   const ratio = chordTokens.length / tokens.length;
 
-  if (ratio >= 0.6) {
+  if (ratio >= 0.6 && chordTokens.length >= MIN_CHORDS_PER_LINE) {
     return {
       type: 'chord',
       text: line,
