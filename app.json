@@ -21,7 +21,8 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_MEDIA_IMAGES",
-        "com.google.android.gms.permission.AD_ID"
+        "com.google.android.gms.permission.AD_ID",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "plugins": [
@@ -45,6 +46,12 @@
           "userTrackingPermission": "This identifier is used to deliver more relevant ads, which keeps Chord Camera free."
         }
       ]
-    ]
+    ],
+    "owner": "brew-point-apps",
+    "extra": {
+      "eas": {
+        "projectId": "4500fa0c-923b-4ce4-a486-a1ea7e462aac"
+      }
+    }
   }
 }

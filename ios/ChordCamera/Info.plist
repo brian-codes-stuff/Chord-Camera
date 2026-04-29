@@ -33,6 +33,12 @@
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-6177580188526680~3593736042</string>
+    <key>GADDelayAppMeasurementInit</key>
+    <false/>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
@@ -50,6 +56,8 @@
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>Chord Camera reads chord charts from your photo library.</string>
+    <key>NSUserTrackingUsageDescription</key>
+    <string>This identifier is used to deliver more relevant ads, which keeps Chord Camera free.</string>
     <key>RCTNewArchEnabled</key>
     <true/>
     <key>UILaunchStoryboardName</key>

@@ -11,7 +11,11 @@ const FLAT_NOTES  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb',
 // Major keys that conventionally use flats. C and all sharp keys use sharps.
 const FLAT_KEYS = new Set(['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb']);
 
-const CHORD_REGEX = /^([A-G])([#b])?([^/\s]*)(?:\/([A-G])([#b])?)?$/;
+// Strict chord regex. Quality must match a known pattern; arbitrary letters are rejected.
+// Catches: C, Cm, Cmaj7, Cm7b5, C7sus4, Cadd9, C/E, F#m7, Bb, Bbmaj9, etc.
+// Rejects: "Bridge", "Chorus", "Cornerstone", "Be", "Free", song titles in general.
+const CHORD_REGEX =
+  /^([A-G])([#b])?(?:(m|min|M|maj|Maj|dim|aug|sus|add|°|\+)?(?:(\d+))?(?:sus[24])?(?:add\d+)?(?:[#b]\d+)*)(?:\/([A-G])([#b])?)?$/;
 
 export const ALL_KEYS = [
   'C', 'C#', 'Db', 'D', 'Eb', 'E', 'F',
@@ -39,7 +43,10 @@ export function parseChord(token) {
   if (!token) return null;
   const match = token.match(CHORD_REGEX);
   if (!match) return null;
-  const [, root, accidental = '', quality = '', bassRoot, bassAccidental = ''] = match;
+  const [whole, root, accidental = '', , , bassRoot, bassAccidental = ''] = match;
+  // The full chord text minus root/accidental/bass is the quality
+  const bassPart = bassRoot ? '/' + bassRoot + bassAccidental : '';
+  const quality = whole.slice((root + accidental).length, whole.length - bassPart.length);
   return {
     root: root + accidental,
     quality,

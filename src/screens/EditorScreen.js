@@ -151,69 +151,47 @@ export default function EditorScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Key info bar */}
-      <View style={styles.keyBar}>
-        <View style={styles.keyBlock}>
-          <Text style={styles.keyLabel}>Original</Text>
-          <TouchableOpacity
-            style={styles.keyValue}
-            onPress={() => {
-              const idx = ALL_KEYS.indexOf(originalKey);
-              const next = ALL_KEYS[(idx + 1) % ALL_KEYS.length];
-              Haptics.selectionAsync();
-              setOriginalKey(next);
-            }}
-          >
-            <Text style={styles.keyValueText}>{originalKey}</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Compact key strip — original chip + scrolling target pills */}
+      <View style={styles.keyStrip}>
+        <TouchableOpacity
+          style={styles.originalChip}
+          onPress={() => {
+            const idx = ALL_KEYS.indexOf(originalKey);
+            Haptics.selectionAsync();
+            setOriginalKey(ALL_KEYS[(idx + 1) % ALL_KEYS.length]);
+          }}
+        >
+          <Text style={styles.originalLabel}>FROM</Text>
+          <Text style={styles.originalValue}>{originalKey}</Text>
+        </TouchableOpacity>
 
-        <View style={styles.transposeIndicator}>
-          <Text style={styles.transposeArrow}>→</Text>
-          {isTransposed && (
-            <Text style={styles.transposeAmount}>
-              {semitones > 6 ? semitones - 12 : semitones} st
-            </Text>
-          )}
-        </View>
-
-        <View style={styles.keyBlock}>
-          <Text style={styles.keyLabel}>Playing in</Text>
-          <View style={[styles.keyValue, styles.keyValueActive]}>
-            <Text style={[styles.keyValueText, styles.keyValueTextActive]}>
-              {targetKey}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Key picker pills */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.keyPicker}
-      >
-        {ALL_KEYS.map(key => {
-          const active = key === targetKey;
-          return (
-            <TouchableOpacity
-              key={key}
-              style={[styles.keyPill, active && styles.keyPillActive]}
-              onPress={() => handleKeyChange(key)}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.keyPillText,
-                  active && styles.keyPillTextActive,
-                ]}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.keyPicker}
+        >
+          {ALL_KEYS.map(key => {
+            const active = key === targetKey;
+            return (
+              <TouchableOpacity
+                key={key}
+                style={[styles.keyPill, active && styles.keyPillActive]}
+                onPress={() => handleKeyChange(key)}
+                activeOpacity={0.7}
               >
-                {key}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+                <Text
+                  style={[
+                    styles.keyPillText,
+                    active && styles.keyPillTextActive,
+                  ]}
+                >
+                  {key}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {/* Chart display */}
       <ScrollView
@@ -262,73 +240,57 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     paddingHorizontal: spacing.md,
   },
-  keyBar: {
+  keyStrip: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
     backgroundColor: colors.bgCard,
+    borderBottomColor: colors.bgCardBorder,
+    borderBottomWidth: 1,
+    paddingVertical: 6,
+    paddingLeft: spacing.md,
   },
-  keyBlock: { alignItems: 'center', flex: 1 },
-  keyLabel: {
-    ...typography.micro,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    marginBottom: spacing.xs,
-  },
-  keyValue: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+  originalChip: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
     borderRadius: radius.sm,
-    backgroundColor: colors.bgCardElevated,
-    minWidth: 64,
-    alignItems: 'center',
-  },
-  keyValueActive: {
-    backgroundColor: colors.accent,
-  },
-  keyValueText: {
-    ...typography.title,
-    color: colors.textPrimary,
-  },
-  keyValueTextActive: {
-    color: '#0A0E1A',
-  },
-  transposeIndicator: {
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-  },
-  transposeArrow: {
-    fontSize: 24,
-    color: colors.textMuted,
-  },
-  transposeAmount: {
-    ...typography.micro,
-    color: colors.accent,
-    marginTop: 2,
-  },
-  keyPicker: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  keyPill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
-    backgroundColor: colors.bgCard,
     borderColor: colors.bgCardBorder,
     borderWidth: 1,
     marginRight: spacing.sm,
-    minWidth: 48,
+    minWidth: 50,
+  },
+  originalLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 0.5,
+  },
+  originalValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginTop: -1,
+  },
+  keyPicker: {
+    paddingRight: spacing.md,
+    alignItems: 'center',
+  },
+  keyPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.full,
+    backgroundColor: colors.bgCardElevated,
+    marginRight: 6,
+    minWidth: 38,
     alignItems: 'center',
   },
   keyPillActive: {
     backgroundColor: colors.accent,
-    borderColor: colors.accent,
   },
   keyPillText: {
-    ...typography.heading,
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.textPrimary,
   },
   keyPillTextActive: {

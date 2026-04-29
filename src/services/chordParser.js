@@ -11,6 +11,8 @@
 import { isChord, parseChord, transposeChord } from './transposer';
 
 const SECTION_REGEX = /^\s*\[([^\]]+)\]\s*$/;
+const SECTION_KEYWORD_REGEX =
+  /^\s*((?:pre[-\s]?)?(?:verse|chorus|bridge|intro|outro|interlude|tag|coda|refrain|ending|hook|solo|instrumental|breakdown|vamp|turnaround|prechorus)(?:\s*\d+)?)\s*:?\s*$/i;
 
 /**
  * Classify and parse a single line.
@@ -20,6 +22,9 @@ function classifyLine(line) {
 
   const sectionMatch = line.match(SECTION_REGEX);
   if (sectionMatch) return { type: 'section', text: sectionMatch[1].trim() };
+
+  const keywordMatch = line.match(SECTION_KEYWORD_REGEX);
+  if (keywordMatch) return { type: 'section', text: keywordMatch[1].trim() };
 
   // Find all whitespace-separated tokens with their column positions
   const tokens = [];
