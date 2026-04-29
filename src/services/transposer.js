@@ -12,10 +12,13 @@ const FLAT_NOTES  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb',
 const FLAT_KEYS = new Set(['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb']);
 
 // Strict chord regex. Quality must match a known pattern; arbitrary letters are rejected.
-// Catches: C, Cm, Cmaj7, Cm7b5, C7sus4, Cadd9, C/E, F#m7, Bb, Bbmaj9, etc.
+// Catches: C, Cm, Cmaj7, Cm7b5, C7sus4, Cadd9, C/E, F#m7, Bb, Bbmaj9, D(4), C(2), Em(7), D(maj7), etc.
 // Rejects: "Bridge", "Chorus", "Cornerstone", "Be", "Free", song titles in general.
+//
+// CCLI / SongSelect charts wrap extensions in parens (D⁽⁴⁾ → "D(4)" after OCR);
+// parens may appear anywhere within the quality block (e.g. Em(7), D(maj7), C(2)).
 const CHORD_REGEX =
-  /^([A-G])([#b])?(?:(m|min|M|maj|Maj|dim|aug|sus|add|°|\+)?(?:(\d+))?(?:sus[24])?(?:add\d+)?(?:[#b]\d+)*)(?:\/([A-G])([#b])?)?$/;
+  /^([A-G])([#b])?[()]*(?:(m|min|M|maj|Maj|dim|aug|sus|add|°|\+)?[()]*(?:(\d+))?[()]*(?:sus[24])?[()]*(?:add\d+)?[()]*(?:[#b]\d+)*[()]*)(?:\/([A-G])([#b])?)?$/;
 
 export const ALL_KEYS = [
   'C', 'C#', 'Db', 'D', 'Eb', 'E', 'F',

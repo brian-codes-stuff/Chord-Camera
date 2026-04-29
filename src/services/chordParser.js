@@ -22,11 +22,6 @@ const METADATA_REGEX =
 // Logo / brand strings worth skipping outright (often OCR'd from the chart header)
 const BRAND_REGEX = /\b(songselect|ccli|onsong|chordpro|planning\s*center|propresenter)\b/i;
 
-// Minimum number of chord-shaped tokens required for a line to be classified
-// as a chord line. Catches cases where OCR isolates a single letter (e.g. the
-// "G" in "Key - G", or a logo letter on its own line) that happens to match
-// a chord regex.
-const MIN_CHORDS_PER_LINE = 2;
 
 /**
  * Classify and parse a single line.
@@ -55,15 +50,13 @@ function classifyLine(line) {
 
   if (!tokens.length) return { type: 'blank', text: '' };
 
-  // Classify as chord line only if:
-  //   1. >=60% of tokens parse as chords AND
-  //   2. there are at least MIN_CHORDS_PER_LINE chord tokens
-  // Rule #2 stops single stray letters (logo fragments, "Key - G", etc.)
-  // from getting transposed.
+  // Classify as chord line if >=60% of tokens parse as chords. (Metadata
+  // and brand headers are caught earlier, so a stray "G" in "Key - G" never
+  // reaches this code path.)
   const chordTokens = tokens.filter(t => isChord(t.text));
   const ratio = chordTokens.length / tokens.length;
 
-  if (ratio >= 0.6 && chordTokens.length >= MIN_CHORDS_PER_LINE) {
+  if (ratio >= 0.6) {
     return {
       type: 'chord',
       text: line,
