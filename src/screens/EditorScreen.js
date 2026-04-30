@@ -47,6 +47,7 @@ export default function EditorScreen({ route, navigation }) {
 
   const [title, setTitle] = useState('Untitled');
   const [originalText, setOriginalText] = useState(initialText || '');
+  const [editing, setEditing] = useState(false);
   const [originalKey, setOriginalKey] = useState('C');
   const [targetKey, setTargetKey] = useState('C');
   const [savedId, setSavedId] = useState(chartId || null);
@@ -193,7 +194,38 @@ export default function EditorScreen({ route, navigation }) {
         </ScrollView>
       </View>
 
-      {/* Chart display */}
+      {/* Edit toggle */}
+      <View style={styles.editToggleRow}>
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.selectionAsync();
+            setEditing(e => !e);
+          }}
+          hitSlop={12}
+        >
+          <Text style={styles.editToggleText}>
+            {editing ? '✓ Done editing' : '✎ Edit chart'}
+          </Text>
+        </TouchableOpacity>
+        {editing && (
+          <Text style={styles.editHint}>
+            Fix any OCR mistakes — chord changes apply when you switch back
+          </Text>
+        )}
+      </View>
+
+      {/* Chart display — view mode or edit mode */}
+      {editing ? (
+        <TextInput
+          style={styles.editorTextInput}
+          value={originalText}
+          onChangeText={setOriginalText}
+          multiline
+          autoCapitalize="none"
+          autoCorrect={false}
+          textAlignVertical="top"
+        />
+      ) : (
       <ScrollView
         style={styles.chartScroll}
         contentContainerStyle={styles.chartContent}
@@ -213,6 +245,7 @@ export default function EditorScreen({ route, navigation }) {
           </View>
         </ScrollView>
       </ScrollView>
+      )}
       <Banner />
     </SafeAreaView>
   );
@@ -328,6 +361,36 @@ const styles = StyleSheet.create({
     fontFamily: MONO_FONT,
     fontSize: 15,
     lineHeight: 22,
+  },
+  editToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderBottomColor: colors.bgCardBorder,
+    borderBottomWidth: 1,
+  },
+  editToggleText: {
+    ...typography.caption,
+    color: colors.accent,
+    fontWeight: '600',
+  },
+  editHint: {
+    ...typography.caption,
+    color: colors.textMuted,
+    flex: 1,
+    textAlign: 'right',
+    marginLeft: spacing.sm,
+  },
+  editorTextInput: {
+    flex: 1,
+    fontFamily: MONO_FONT,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textPrimary,
+    backgroundColor: colors.bgCard,
+    padding: spacing.md,
   },
   placeholder: {
     ...typography.body,

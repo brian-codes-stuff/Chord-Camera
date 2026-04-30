@@ -22,6 +22,16 @@ const METADATA_REGEX =
 // Logo / brand strings worth skipping outright (often OCR'd from the chart header)
 const BRAND_REGEX = /\b(songselect|ccli|onsong|chordpro|planning\s*center|propresenter)\b/i;
 
+// Apple Vision often reads superscript "7" as "?". Rewrite trailing "?" to "7"
+// only when the rest of the token looks chord-shaped, so lyric question marks
+// are left alone.
+const TRAILING_QUESTION_RE = /^([A-Ga-g][#b]?(?:m|maj|min|Maj|sus|add)?)\?$/;
+function normalizeOcrToken(text) {
+  if (!text) return text;
+  const m = text.match(TRAILING_QUESTION_RE);
+  return m ? m[1] + '7' : text;
+}
+
 
 /**
  * Classify and parse a single line.
@@ -40,12 +50,14 @@ function classifyLine(line) {
     return { type: 'lyric', text: line };
   }
 
-  // Find all whitespace-separated tokens with their column positions
+  // Find all whitespace-separated tokens with their column positions.
+  // Apply OCR token normalization (Em? → Em7, etc.) so the corrected form
+  // is what gets classified, transposed, and rendered.
   const tokens = [];
   const tokenRegex = /\S+/g;
   let match;
   while ((match = tokenRegex.exec(line)) !== null) {
-    tokens.push({ text: match[0], col: match.index });
+    tokens.push({ text: normalizeOcrToken(match[0]), col: match.index });
   }
 
   if (!tokens.length) return { type: 'blank', text: '' };

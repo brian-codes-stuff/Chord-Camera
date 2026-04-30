@@ -104,15 +104,26 @@ function reconstructLayout(blocks) {
   }
   rows.push(curr);
 
-  // Render each row with column-aware spacing.
+  // A token "looks chord-like" if it starts with A-G (any case). We use this
+  // to decide whether a row needs column-aware spacing (chord rows) or just
+  // simple word spacing (titles, credits, lyric-only rows).
+  const looksChordy = (t) => /^[A-Ga-g]/.test(t.text);
+
   return rows.map(row => {
     row.sort((a, b) => a.x - b.x);
+    const hasChord = row.some(looksChordy) && row.length <= 12 && row.every(el => el.text.length <= 8);
+
+    if (!hasChord) {
+      // Title / credit / lyric row — single-space join, no padding
+      return row.map(el => el.text).join(' ');
+    }
+
+    // Chord-bearing row — preserve column positions
     let line = '';
     let cursor = 0;
     for (let i = 0; i < row.length; i++) {
       const el = row[i];
       let col = Math.round(el.x / charWidth);
-      // Always leave at least one space between adjacent tokens
       if (i > 0) col = Math.max(col, cursor + 1);
       if (col > cursor) line += ' '.repeat(col - cursor);
       line += el.text;

@@ -18,7 +18,7 @@ const FLAT_KEYS = new Set(['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb']);
 // CCLI / SongSelect charts wrap extensions in parens (D⁽⁴⁾ → "D(4)" after OCR);
 // parens may appear anywhere within the quality block (e.g. Em(7), D(maj7), C(2)).
 const CHORD_REGEX =
-  /^([A-G])([#b])?[()]*(?:(m|min|M|maj|Maj|dim|aug|sus|add|°|\+)?[()]*(?:(\d+))?[()]*(?:sus[24])?[()]*(?:add\d+)?[()]*(?:[#b]\d+)*[()]*)(?:\/([A-G])([#b])?)?$/;
+  /^([A-Ga-g])([#b])?[()]*(?:(m|min|M|maj|Maj|MAJ|dim|aug|sus|add|°|\+)?[()]*(?:(\d+))?[()]*(?:sus[24])?[()]*(?:add\d+)?[()]*(?:[#b]\d+)*[()]*)(?:\/([A-Ga-g])([#b])?)?$/;
 
 export const ALL_KEYS = [
   'C', 'C#', 'Db', 'D', 'Eb', 'E', 'F',
@@ -41,15 +41,19 @@ function indexToNote(index, useFlats) {
 /**
  * Parse a chord token into root, accidental, quality, bass.
  * Returns null if the token isn't a chord.
+ *
+ * Roots/bass are normalized to uppercase so OCR-introduced case errors
+ * (e.g. "c2" instead of "C2") still produce correctly-typed chords.
  */
 export function parseChord(token) {
   if (!token) return null;
   const match = token.match(CHORD_REGEX);
   if (!match) return null;
-  const [whole, root, accidental = '', , , bassRoot, bassAccidental = ''] = match;
-  // The full chord text minus root/accidental/bass is the quality
-  const bassPart = bassRoot ? '/' + bassRoot + bassAccidental : '';
-  const quality = whole.slice((root + accidental).length, whole.length - bassPart.length);
+  const [whole, rootRaw, accidental = '', , , bassRootRaw, bassAccidental = ''] = match;
+  const root = rootRaw.toUpperCase();
+  const bassRoot = bassRootRaw ? bassRootRaw.toUpperCase() : null;
+  const bassPart = bassRootRaw ? '/' + bassRootRaw + bassAccidental : '';
+  const quality = whole.slice((rootRaw + accidental).length, whole.length - bassPart.length);
   return {
     root: root + accidental,
     quality,
