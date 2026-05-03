@@ -47,10 +47,10 @@
         }
       ]
     ],
-    "owner": "brew-point-apps",
+    "owner": "brian-alonzo-web-design-and-development",
     "extra": {
       "eas": {
-        "projectId": "4500fa0c-923b-4ce4-a486-a1ea7e462aac"
+        "projectId": "f0973900-0440-428e-aef4-1293ddc94c13"
       }
     }
   }

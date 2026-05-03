@@ -66,7 +66,7 @@ export default function EditorScreen({ route, navigation }) {
     })();
   }, [chartId]);
 
-  // Detect original key on first load
+  // Detect original key and title on first load
   useEffect(() => {
     if (chartId) return; // already-saved charts have their key
     if (!originalText) return;
@@ -75,6 +75,12 @@ export default function EditorScreen({ route, navigation }) {
     const detected = detectKey(chords);
     setOriginalKey(detected);
     setTargetKey(detected);
+    // Use the first non-empty, non-section, non-chord line as the title
+    const firstLine = originalText
+      .split('\n')
+      .map(l => l.trim())
+      .find(l => l && !l.startsWith('['));
+    if (firstLine) setTitle(firstLine);
   }, [originalText, chartId]);
 
   const parsed = useMemo(() => parseChart(originalText), [originalText]);
@@ -152,20 +158,9 @@ export default function EditorScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Compact key strip — original chip + scrolling target pills */}
+      {/* Key strip — scrollable target key pills */}
       <View style={styles.keyStrip}>
-        <TouchableOpacity
-          style={styles.originalChip}
-          onPress={() => {
-            const idx = ALL_KEYS.indexOf(originalKey);
-            Haptics.selectionAsync();
-            setOriginalKey(ALL_KEYS[(idx + 1) % ALL_KEYS.length]);
-          }}
-        >
-          <Text style={styles.originalLabel}>FROM</Text>
-          <Text style={styles.originalValue}>{originalKey}</Text>
-        </TouchableOpacity>
-
+        <Text style={styles.keyLabel}>KEY</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -282,28 +277,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingLeft: spacing.md,
   },
-  originalChip: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radius.sm,
-    borderColor: colors.bgCardBorder,
-    borderWidth: 1,
-    marginRight: spacing.sm,
-    minWidth: 50,
-  },
-  originalLabel: {
-    fontSize: 9,
+  keyLabel: {
+    fontSize: 10,
     fontWeight: '700',
     color: colors.textMuted,
-    letterSpacing: 0.5,
-  },
-  originalValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginTop: -1,
+    letterSpacing: 1,
+    marginRight: spacing.sm,
+    minWidth: 28,
   },
   keyPicker: {
     paddingRight: spacing.md,
