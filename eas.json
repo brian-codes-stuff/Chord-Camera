@@ -13,12 +13,21 @@
     },
     "production": {
       "autoIncrement": true
+    },
+    "verify": {
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {
     "production": {
       "ios": {
         "ascAppId": "6764648840"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account-key.json",
+        "track": "production"
       }
     }
   }
