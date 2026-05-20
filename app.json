@@ -9,6 +9,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.brianalonzo.chordcamera",
+      "deploymentTarget": "15.1",
+      "buildNumber": "8",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Chord Camera uses the camera to capture chord charts so you can transpose them.",
@@ -20,7 +22,6 @@
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.READ_MEDIA_IMAGES",
         "com.google.android.gms.permission.AD_ID",
         "android.permission.RECORD_AUDIO"
       ]
